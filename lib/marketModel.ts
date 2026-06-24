@@ -139,6 +139,40 @@ const commodityConfig: Record<string, Pick<Commodity, "name" | "category" | "uni
 
 export const supportedCodes = Object.keys(commodityConfig);
 
+export type ScrapedCommodityInput = {
+  code: string;
+  currentPrice: number;
+  dayChangePct?: number;
+  source: string;
+  updatedAt?: string;
+};
+
+export function normalizeScrapedCommodities(raw: ScrapedCommodityInput[]): Commodity[] {
+  const result: Commodity[] = [];
+  for (const row of raw) {
+    const code = String(row.code ?? "").trim().toUpperCase();
+    const cfg = commodityConfig[code];
+    if (!cfg) continue;
+    const price = Number(row.currentPrice);
+    if (!Number.isFinite(price) || price <= 0) continue;
+    const pct = Number(row.dayChangePct ?? 0);
+    result.push({
+      code,
+      name: cfg.name,
+      category: cfg.category,
+      unit: cfg.unit,
+      currency: cfg.currency,
+      currentPrice: round(price, price < 10 ? 3 : 2),
+      dayChangePct: round(Number.isFinite(pct) ? pct : 0, 2),
+      source: row.source || "服务端爬虫",
+      updatedAt: row.updatedAt || new Date().toISOString(),
+      factors: cfg.factors,
+      procurementUse: cfg.procurementUse
+    });
+  }
+  return mergeWithFallback(result);
+}
+
 export function createFallbackCommodities(): Commodity[] {
   const today = new Date();
   return supportedCodes.map((code, index) => {
@@ -154,56 +188,12 @@ export function createFallbackCommodities(): Commodity[] {
       currency: cfg.currency,
       currentPrice: price,
       dayChangePct: change,
-      source: "演示模型数据：待接入正式行情API后自动替换",
+      source: "演示模型数据：爬虫未抓到有效行情时兜底",
       updatedAt: today.toISOString(),
       factors: cfg.factors,
       procurementUse: cfg.procurementUse
     };
   });
-}
-
-export function normalizeTradingEconomics(raw: unknown): Commodity[] {
-  if (!Array.isArray(raw)) return [];
-  const rows = raw as Array<Record<string, unknown>>;
-  const aliases: Record<string, string> = {
-    "Brent": "BRENT",
-    "Brent Oil": "BRENT",
-    "Natural gas": "NATGAS",
-    "Natural Gas": "NATGAS",
-    "Copper": "COPPER",
-    "Aluminum": "ALUMINUM",
-    "Nickel": "NICKEL",
-    "Iron Ore": "IRONORE",
-    "Steel": "HRC",
-    "Methanol": "METHANOL",
-    "PVC": "PVC",
-    "PTA": "PTA"
-  };
-
-  const result: Commodity[] = [];
-  for (const row of rows) {
-    const rawName = String(row.Name ?? row.Symbol ?? row.Commodity ?? "");
-    const code = aliases[rawName] ?? aliases[rawName.trim()];
-    if (!code || !commodityConfig[code]) continue;
-    const cfg = commodityConfig[code];
-    const price = Number(row.Last ?? row.Price ?? row.Close ?? row.Value ?? NaN);
-    if (!Number.isFinite(price)) continue;
-    const pct = Number(row.DailyChangePercentage ?? row.ChangePercentage ?? row.ChangePercent ?? row.Change ?? 0);
-    result.push({
-      code,
-      name: cfg.name,
-      category: cfg.category,
-      unit: cfg.unit,
-      currency: cfg.currency,
-      currentPrice: round(price, price < 10 ? 3 : 2),
-      dayChangePct: round(Number.isFinite(pct) ? pct : 0, 2),
-      source: "Trading Economics Markets API",
-      updatedAt: new Date().toISOString(),
-      factors: cfg.factors,
-      procurementUse: cfg.procurementUse
-    });
-  }
-  return mergeWithFallback(result);
 }
 
 function mergeWithFallback(live: Commodity[]) {

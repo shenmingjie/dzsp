@@ -158,3 +158,12 @@ p { color: var(--muted); line-height: 1.75; }
   .cardTop { flex-direction: column; }
   .priceBox { text-align: left; }
 }
+.statusValue.mixed { color: var(--yellow); }
+.sourceLine {
+  max-width: 320px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+  margin: 6px 0;
+  word-break: break-all;
+}

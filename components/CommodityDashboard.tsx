@@ -31,7 +31,7 @@ type Commodity = {
 };
 
 type ApiPayload = {
-  dataMode: "live" | "fallback";
+  dataMode: "crawler" | "mixed" | "fallback";
   provider: string;
   executiveSummary: {
     updatedAt: string;
@@ -41,6 +41,14 @@ type ApiPayload = {
   };
   commodities: Commodity[];
   notes: string[];
+  crawlerStats: {
+    totalSources: number;
+    enabledSources: number;
+    successSources: number;
+    failedSources: number;
+    fallbackCodes: string[];
+    blockedByRobots: string[];
+  };
 };
 
 const categoryOrder = ["全部", "能源", "金属", "黑色", "化工"] as const;
@@ -134,6 +142,7 @@ function CommodityCard({ item }: { item: Commodity }) {
         <div className="priceBox">
           <div className="price">{item.currentPrice.toLocaleString("zh-CN")}</div>
           <div className="unit">{item.unit}</div>
+          <div className="sourceLine">来源：{item.source}</div>
           <div className={`change ${item.dayChangePct > 0 ? "up" : item.dayChangePct < 0 ? "down" : "flat"}`}>{item.dayChangePct > 0 ? "+" : ""}{item.dayChangePct}% 今日</div>
         </div>
       </div>
@@ -210,7 +219,7 @@ export default function CommodityDashboard() {
         </div>
         <div className="heroPanel">
           <div className="statusLabel">数据模式</div>
-          <div className={`statusValue ${payload?.dataMode === "live" ? "live" : "demo"}`}>{payload?.dataMode === "live" ? "实时API" : "演示/待接入"}</div>
+          <div className={`statusValue ${payload?.dataMode === "crawler" ? "live" : payload?.dataMode === "mixed" ? "mixed" : "demo"}`}>{payload?.dataMode === "crawler" ? "爬虫实时" : payload?.dataMode === "mixed" ? "爬虫+兜底" : "演示/待接入"}</div>
           <div className="provider">{payload?.provider ?? "加载中..."}</div>
         </div>
       </section>
@@ -277,7 +286,8 @@ export default function CommodityDashboard() {
           </section>
 
           <section className="notes">
-            <div className="sectionLabel">模型边界</div>
+            <div className="sectionLabel">爬虫与模型边界</div>
+            <p>爬虫源配置：共 {payload.crawlerStats.totalSources} 个，启用 {payload.crawlerStats.enabledSources} 个，成功 {payload.crawlerStats.successSources} 个，失败/兜底 {payload.crawlerStats.failedSources} 个。</p>
             {payload.notes.map((note) => <p key={note}>{note}</p>)}
             <p>更新时间：{new Date(payload.executiveSummary.updatedAt).toLocaleString("zh-CN")}</p>
           </section>

@@ -1,0 +1,27 @@
+[
+  {
+    "code": "BRENT",
+    "sourceName": "Yahoo Finance Page",
+    "url": "https://finance.yahoo.com/quote/BZ=F",
+    "priceSelector": "fin-streamer[data-field=\"regularMarketPrice\"]",
+    "changeSelector": "fin-streamer[data-field=\"regularMarketChangePercent\"]",
+    "priceRegex": "\\\"regularMarketPrice\\\"\\\\s*:\\\\s*\\\\{[^}]*\\\"raw\\\"\\\\s*:\\\\s*(-?\\\\d+(?:\\\\.\\\\d+)?)",
+    "changeRegex": "\\\"regularMarketChangePercent\\\"\\\\s*:\\\\s*\\\\{[^}]*\\\"raw\\\"\\\\s*:\\\\s*(-?\\\\d+(?:\\\\.\\\\d+)?)"
+  },
+  {
+    "code": "HRC",
+    "sourceName": "请替换为企业允许抓取的钢材行情页面",
+    "url": "https://example.com/hrc-price-page",
+    "priceSelector": ".latest-price",
+    "changeSelector": ".change-percent",
+    "enabled": false
+  },
+  {
+    "code": "PVC",
+    "sourceName": "请替换为企业允许抓取的化工行情页面",
+    "url": "https://example.com/pvc-price-page",
+    "priceRegex": "PVC价格[:：]\\\\s*([0-9,.]+)",
+    "changeRegex": "涨跌幅[:：]\\\\s*([-+]?[0-9.]+)%",
+    "enabled": false
+  }
+]
